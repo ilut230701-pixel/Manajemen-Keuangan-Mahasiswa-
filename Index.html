@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manajemen Keuangan Mahasiswa</title>
+
+<style>
+/* RESET & FULL SCREEN */
+*{
+    box-sizing: border-box;
+}
+
+html, body{
+    width:100%;
+    height:100%;
+    margin:0;
+    padding:0;
+    font-family: Arial, sans-serif;
+    background:#f2f4f8;
+}
+
+/* CONTAINER */
+.container{
+    width:100%;
+    min-height:100vh;
+    padding:20px;
+}
+
+/* JUDUL */
+h1{
+    text-align:center;
+    color:#2c3e50;
+    margin-bottom:20px;
+}
+
+/* CARD */
+.card{
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 6px 12px rgba(0,0,0,.1);
+    margin-bottom:20px;
+}
+
+/* GRID INPUT */
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(250px, 1fr));
+    gap:15px;
+}
+
+/* FORM */
+label{
+    font-weight:bold;
+}
+
+input, select, button{
+    padding:10px;
+    width:100%;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:14px;
+}
+
+/* BUTTON GROUP */
+.btn-group{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));
+    gap:10px;
+    margin-top:15px;
+}
+
+button{
+    border:none;
+    color:white;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+/* BUTTON COLOR */
+.add{background:#27ae60}
+.delete{background:#e74c3c}
+.reset{background:#f39c12}
+.save{background:#2980b9}
+.load{background:#8e44ad}
+
+/* TABLE */
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:10px;
+}
+
+th, td{
+    border:1px solid #ddd;
+    padding:10px;
+    text-align:center;
+    font-size:14px;
+}
+
+th{
+    background:#2c3e50;
+    color:white;
+}
+
+/* SUMMARY */
+.summary{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));
+    gap:15px;
+    margin-top:20px;
+}
+
+.box{
+    background:#ecf0f1;
+    padding:20px;
+    border-radius:10px;
+    text-align:center;
+    font-weight:bold;
+}
+
+.pemasukan{color:#27ae60}
+.pengeluaran{color:#e74c3c}
+.saldo{
+    color:#2980b9;
+    font-size:20px;
+}
+
+/* MOBILE */
+@media (max-width: 600px){
+    h1{font-size:20px;}
+    th, td{font-size:12px; padding:8px;}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>Aplikasi Manajemen Keuangan Mahasiswa</h1>
+
+<div class="card">
+<h3>Input Transaksi</h3>
+
+<div class="grid">
+<div>
+<label>Tanggal</label>
+<input type="date" id="tanggal">
+</div>
+
+<div>
+<label>Nama Transaksi</label>
+<input type="text" id="nama">
+</div>
+
+<div>
+<label>Nominal (Rp)</label>
+<input type="number" id="nominal">
+</div>
+
+<div>
+<label>Jenis</label>
+<select id="jenis">
+<option value="">Pilih</option>
+<option>Pemasukan</option>
+<option>Pengeluaran</option>
+</select>
+</div>
+
+<div>
+<label>Kategori</label>
+<select id="kategori">
+<option value="">Pilih</option>
+<option>Makan & Minum</option>
+<option>Transportasi</option>
+<option>Pulsa & Internet</option>
+<option>Belanja</option>
+<option>Kesehatan</option>
+<option>Hiburan</option>
+<option>Keperluan Kuliah</option>
+<option>Tagihan</option>
+<option>Uang Saku</option>
+<option>Gaji / Upah</option>
+<option>Hadiah</option>
+<option>Beasiswa</option>
+<option>Lainnya</option>
+</select>
+</div>
+</div>
+
+<div class="btn-group">
+<button class="add" onclick="tambahData()">Tambah</button>
+<button class="delete" onclick="hapusTerakhir()">Hapus</button>
+<button class="reset" onclick="resetData()">Reset</button>
+<button class="save" onclick="simpanData()">Simpan</button>
+<button class="load" onclick="lihatData()">Lihat Data</button>
+</div>
+</div>
+
+<div class="card">
+<table>
+<thead>
+<tr>
+<th>Tanggal</th>
+<th>Nama</th>
+<th>Nominal</th>
+<th>Jenis</th>
+<th>Kategori</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
+<div class="summary">
+<div class="box pemasukan">Total Pemasukan<br><span id="totalMasuk">Rp 0</span></div>
+<div class="box pengeluaran">Total Pengeluaran<br><span id="totalKeluar">Rp 0</span></div>
+<div class="box saldo">Saldo<br><span id="saldo">Rp 0</span></div>
+</div>
+</div>
+</div>
+
+<script>
+let data = [];
+let totalMasuk = 0;
+let totalKeluar = 0;
+
+document.getElementById("tanggal").valueAsDate = new Date();
+
+function rupiah(x){
+    return "Rp " + x.toLocaleString("id-ID");
+}
+
+function tambahData(){
+    let t = tanggal.value;
+    let n = nama.value;
+    let nom = parseInt(nominal.value);
+    let j = jenis.value;
+    let k = kategori.value;
+
+    if(!t||!n||!nom||!j||!k){
+        alert("Semua data wajib diisi!");
+        return;
+    }
+
+    if(j==="Pemasukan") totalMasuk += nom;
+    else totalKeluar += nom;
+
+    data.push({t,n,nom,j,k});
+    render();
+}
+
+function render(){
+    let tb = document.getElementById("tbody");
+    tb.innerHTML = "";
+
+    data.forEach(d=>{
+        tb.innerHTML += `
+        <tr>
+        <td>${d.t}</td>
+        <td>${d.n}</td>
+        <td>${rupiah(d.nom)}</td>
+        <td>${d.j}</td>
+        <td>${d.k}</td>
+        </tr>`;
+    });
+
+    document.getElementById("totalMasuk").innerText = rupiah(totalMasuk);
+    document.getElementById("totalKeluar").innerText = rupiah(totalKeluar);
+    document.getElementById("saldo").innerText = rupiah(totalMasuk - totalKeluar);
+}
+
+function hapusTerakhir(){
+    if(data.length===0) return;
+
+    let d = data.pop();
+    if(d.j==="Pemasukan") totalMasuk -= d.nom;
+    else totalKeluar -= d.nom;
+
+    render();
+}
+
+function resetData(){
+    if(confirm("Hapus semua data?")){
+        data=[];
+        totalMasuk=0;
+        totalKeluar=0;
+        render();
+        localStorage.clear();
+    }
+}
+
+function simpanData(){
+    localStorage.setItem("dataKeuangan",JSON.stringify(data));
+    alert("Data berhasil disimpan!");
+}
+
+function lihatData(){
+    let d = localStorage.getItem("dataKeuangan");
+    if(!d){
+        alert("Belum ada data tersimpan");
+        return;
+    }
+
+    data = JSON.parse(d);
+    totalMasuk=0;
+    totalKeluar=0;
+
+    data.forEach(x=>{
+        if(x.j==="Pemasukan") totalMasuk+=x.nom;
+        else totalKeluar+=x.nom;
+    });
+
+    render();
+}
+
+window.onload = lihatData;
+</script>
+
+</body>
+</html>
